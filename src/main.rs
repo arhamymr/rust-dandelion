@@ -1,45 +1,80 @@
-// Variables can be type annotated.
-//  let logical: bool = true;
+#[macro_use]
+extern crate rocket;
 
-//  let a_float: f64 = 1.0;  // Regular annotation
-//  let an_integer   = 5i32; // Suffix annotation
+#[derive(FromFormField)]
+enum Lang {
+    #[field(value = "en")]
+    English,
+    #[field(value = "ru")]
+    #[field(value = "ру")]
+    Russian,
+}
 
-//  // Or a default will be used.
-//  let default_float   = 3.0; // `f64`
-//  let default_integer = 7;   // `i32`
+#[derive(FromForm)]
+struct Options<'r> {
+    emoji: bool,
+    name: Option<&'r str>,
+}
 
-//  // A type can also be inferred from context
-//  let mut inferred_type = 12; // Type i64 is inferred from another line
-//  inferred_type = 4294967296i64;
+// Try visiting:
+//   http://127.0.0.1:8000/hello/world
+#[get("/world")]
+fn world() -> &'static str {
+    "Hello, world!"
+}
 
-//  // A mutable variable's value can be changed.
-//  let mut mutable = 12; // Mutable `i32`
-//  mutable = 21;
+// Try visiting:
+//   http://127.0.0.1:8000/hello/мир
+#[get("/мир")]
+fn mir() -> &'static str {
+    "Привет, мир!"
+}
 
-//  // Error! The type of a variable can't be changed.
-//  mutable = true;
+// Try visiting:
+//   http://127.0.0.1:8000/wave/Rocketeer/100
+#[get("/<name>/<age>")]
+fn wave(name: &str, age: u8) -> String {
+    format!("👋 Hello, {} year old named {}!", age, name)
+}
 
-//  // Variables can be overwritten with shadowing.
-//  let mutable = true;
-
-fn main() {
-    let logical: bool = true;
-    let float: f32 = 1.2;
-
-    let default_integer = 12;
-    let default_float = 1.3;
-
-    let mut strings = "strings here";
-    strings = "another text";
-
-    let _arrays = [1, 2, 3];
-    let _tuples: (bool, i8, i16, i128, &str) = (true, 1, 232, 23, "hellow");
-    if strings == "another text" {
-        strings = "hellow world";
+// Note: without the `..` in `opt..`, we'd need to pass `opt.emoji`, `opt.name`.
+//
+// Try visiting:
+//   http://127.0.0.1:8000/?emoji
+//   http://127.0.0.1:8000/?name=Rocketeer
+//   http://127.0.0.1:8000/?lang=ру
+//   http://127.0.0.1:8000/?lang=ру&emoji
+//   http://127.0.0.1:8000/?emoji&lang=en
+//   http://127.0.0.1:8000/?name=Rocketeer&lang=en
+//   http://127.0.0.1:8000/?emoji&name=Rocketeer
+//   http://127.0.0.1:8000/?name=Rocketeer&lang=en&emoji
+//   http://127.0.0.1:8000/?lang=ru&emoji&name=Rocketeer
+#[get("/?<lang>&<opt..>")]
+fn hello(lang: Option<Lang>, opt: Options<'_>) -> String {
+    let mut greeting = String::new();
+    if opt.emoji {
+        greeting.push_str("👋 ");
     }
 
-    print!(
-        "{}{}{}{}{}",
-        logical, float, default_float, default_integer, strings
-    )
+    match lang {
+        Some(Lang::Russian) => greeting.push_str("Привет"),
+        Some(Lang::English) => greeting.push_str("Hello"),
+        None => greeting.push_str("Hi"),
+    }
+
+    if let Some(name) = opt.name {
+        greeting.push_str(", ");
+        greeting.push_str(name);
+    }
+
+    greeting.push('!');
+    greeting
+}
+
+#[launch]
+fn rocket() -> _ {
+    rocket::build()
+        .mount("/", routes![hello])
+        .mount("/hello", routes![world, mir])
+        .mount("/wave", routes![wave])
 }
