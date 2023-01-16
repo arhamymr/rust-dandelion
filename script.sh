@@ -1,0 +1,1 @@
+cargo run -- parse  example/test.js

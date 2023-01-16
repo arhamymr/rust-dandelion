@@ -10,6 +10,10 @@ struct Cli {
     path: std::path::PathBuf,
 }
 
+fn tokenizer() -> &'static str {
+    return "token";
+}
+
 fn main() {
     let args = Cli::parse();
     let mut content = String::new();
