@@ -1,1 +1,0 @@
-nodemon --exec cargo run --signal SIGTERM
