@@ -4,14 +4,12 @@ use clap::Parser;
 use std::fs;
 use std::io;
 
+mod tokenizer;
 #[derive(Parser)]
+
 struct Cli {
     pattern: String,
     path: std::path::PathBuf,
-}
-
-fn tokenizer() -> &'static str {
-    return "token";
 }
 
 fn main() {
@@ -23,7 +21,7 @@ fn main() {
         let content_chars = content.chars();
 
         for c in content_chars {
-            println!("content {c}")
+            // tokenizer::token(c);
         }
     }
 }
